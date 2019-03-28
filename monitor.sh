@@ -18,9 +18,9 @@
 
 function useage {
     echo
-    echo "Usage: $0" 
+    echo "Usage: $0 <interval> <count>" 
     echo
-    echo "This script takes no arguments" 
+    echo "Example: $0 10 30 - (runs 30 times, every 10 seconds)" 
     echo
     exit
 }
@@ -55,7 +55,7 @@ function kill_ttop {
 }
 
 
-if [ $# -ne 0 ]; then
+if [ $# -ne 2 ]; then
     useage
     exit
 fi
@@ -66,17 +66,17 @@ DATE=$(date '+%Y-%m-%d_%H:%M:%S')
 LOG="/tmp/$NODE-$DATE-monitor.out"
 TTOP_CPU_LOG="/tmp/$NODE-$DATE-monitor-ttop-cpu.out"
 TTOP_ALLOC_LOG="/tmp/$NODE-$DATE-monitor-ttop-alloc.out"
-DELAY=30
-DURATION=300
+DELAY=$1
+COUNT=$2
 
 echo "Running monitor script... please check nodetool sjk is not still running after with \"ps -ef | grep ttop\""
 
 run_cpu_ttop
 run_alloc_ttop
-for loop in {1..30}
+for loop in $(seq $COUNT)
 do
    run_nodetool
-   sleep 10
+   sleep $DELAY
 done
 kill_ttop
 
