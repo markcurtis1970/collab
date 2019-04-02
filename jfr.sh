@@ -28,7 +28,7 @@ function check_jfr {
 
 function start_jfr {
     sudo -u $CASSUSER $JCMD $CASSPID VM.unlock_commercial_features
-    sudo -u $CASSUSER $JCMD $CASSPID JFR.start name=$JFRNAME settings=profile
+    sudo -u $CASSUSER $JCMD $CASSPID JFR.start name=$JFRNAME settings=profile 
 }
 
 function stop_jfr {
@@ -36,7 +36,7 @@ function stop_jfr {
 }
 
 function dump_jfr {
-    sudo -u $CASSUSER $JCMD $CASSPID JFR.dump name=$JFRNAME filename=$JFRFILE
+    sudo -u $CASSUSER $JCMD $CASSPID JFR.dump name=$JFRNAME filename=$JFRFILE compress=true
 }
 
 if [ $# -ne 1 ]; then
