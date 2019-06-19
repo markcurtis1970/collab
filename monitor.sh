@@ -21,6 +21,7 @@ function useage {
     echo "Usage: $0 <interval> <count>" 
     echo
     echo "Example: $0 10 30 - (runs 30 times, every 10 seconds)" 
+    echo "Example: $0 10 -1 - (runs continuously, every 10 seconds)" 
     echo
     exit
 }
@@ -37,7 +38,7 @@ function run_nodetool {
 function run_threaddump {
     echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running thread dump"
     echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running thread dump" >> $TD_LOG
-    sudo -u $CASSUSER jstack -l $CASSPID >> $TD_LOG
+    sudo -u $CASSUSER $JSTACK -l $CASSPID >> $TD_LOG
 }
 
 function run_cpu_ttop {
@@ -58,6 +59,23 @@ function kill_ttop {
     done
 }
 
+function run_top_once {
+    echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running top for pid $CASSPID" 
+    echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running top for pid $CASSPID"  >> $LOG
+    top -b -n 1 -p $CASSPID >> $LOG
+}
+
+function run_iostat_once {
+   echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running iostat"
+   echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running iostat" >> $LOG
+   iostat -c -x -d 1 1 >> $LOG
+}
+
+function run_vmstat_once {
+   echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running vmstat"
+   echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running VMstat" >> $LOG
+   vmstat -w >> $LOG
+}
 
 if [ $# -ne 2 ]; then
     useage
@@ -85,6 +103,8 @@ LOG="$MONDIR/$NODE-$DATE-monitor-$CASSPID.out"
 TD_LOG="$MONDIR/$NODE-$DATE-thread-dump-$CASSPID.out"
 TTOP_CPU_LOG="$MONDIR/$NODE-$DATE-monitor-ttop-cpu-$CASSPID.out"
 TTOP_ALLOC_LOG="$MONDIR/$NODE-$DATE-monitor-ttop-alloc-$CASSPID.out"
+export export PATH=$PATH:$JAVA_HOME/bin
+JSTACK=$(which jstack)
 
 # Main control
 #
@@ -95,18 +115,40 @@ TTOP_ALLOC_LOG="$MONDIR/$NODE-$DATE-monitor-ttop-alloc-$CASSPID.out"
 # these will continue running until they are killed
 # if you CTRL+C this script you will have to kill
 # ttop manually
+
 echo "Running monitor script... please check nodetool sjk is not still running after with \"ps -ef | grep ttop\""
 run_cpu_ttop
 run_alloc_ttop
 
 # Execute loop to run regular commands
 # typically nodetool and thread dumps
-for loop in $(seq $COUNT)
-do
-   run_nodetool
-   run_threaddump
-   sleep $DELAY
-done
+# in addition to some OS level commands
+#
+# Note using a negatvie value for the count
+# means the script will run indefinitely
+if [ $COUNT -lt 0 ]; then
+    while true
+    do
+        echo "Running contonuously"
+        run_top_once
+        run_iostat_once
+        run_vmstat_once
+        run_nodetool
+        run_threaddump
+        sleep $DELAY
+    done
+else
+    for loop in $(seq $COUNT)
+    do
+        echo "Running iteration $loop of $COUNT"
+        run_top_once
+        run_iostat_once
+        run_vmstat_once
+        run_nodetool
+        run_threaddump
+        sleep $DELAY
+    done
+fi
 
 # Clean up ttop processes and exit
 kill_ttop
