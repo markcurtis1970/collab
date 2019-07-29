@@ -22,6 +22,7 @@ function useage {
     echo
     echo "Example: $0 10 30 - (runs 30 times, every 10 seconds)" 
     echo "Example: $0 10 -1 - (runs continuously, every 10 seconds)" 
+    echo "Example: $0 <no args> - (runs just once)" 
     echo
     exit
 }
@@ -77,7 +78,7 @@ function run_vmstat_once {
    vmstat -w >> $LOG
 }
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 0 ] && [ $# -ne 2 ]; then
     useage
     exit
 fi
@@ -95,8 +96,13 @@ fi
 NODE=$(hostname -i)
 DATE=$(date '+%Y-%m-%d_%H:%M:%S')
 MONDIR="/tmp"
-DELAY=$1
-COUNT=$2
+if [ $# -ne 0 ]; then
+    DELAY=$1
+    COUNT=$2
+else
+    DELAY=1
+    COUNT=1
+fi
 CASSPID=$(cat /run/dse/dse.pid)
 CASSUSER="cassandra"
 LOG="$MONDIR/$NODE-$DATE-monitor-$CASSPID.out"
