@@ -109,7 +109,7 @@ LOG="$MONDIR/$NODE-$DATE-monitor-$CASSPID.out"
 TD_LOG="$MONDIR/$NODE-$DATE-thread-dump-$CASSPID.out"
 TTOP_CPU_LOG="$MONDIR/$NODE-$DATE-monitor-ttop-cpu-$CASSPID.out"
 TTOP_ALLOC_LOG="$MONDIR/$NODE-$DATE-monitor-ttop-alloc-$CASSPID.out"
-export export PATH=$PATH:$JAVA_HOME/bin
+export PATH=$PATH:$JAVA_HOME/bin
 JSTACK=$(which jstack)
 
 # Main control
