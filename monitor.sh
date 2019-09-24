@@ -29,7 +29,7 @@ function useage {
 
 function run_nodetool {
     echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running nodetool commands"
-    for COMMAND in compactionstats describecluster failuredetector gcstats gossipinfo info netstats proxyhistograms status statusbinary statusgossip statushandoff 'tpstats --cores'
+    for COMMAND in compactionstats describecluster failuredetector gcstats gossipinfo info netstats proxyhistograms status statusbinary statusgossip statushandoff tpstats 'tpstats --cores'
     do
         echo ">>> $(date '+%Y-%m-%d_%H:%M:%S') ... running nodetool $COMMAND" >> $LOG
         nodetool $COMMAND >> $LOG
