@@ -135,7 +135,7 @@ run_alloc_ttop
 if [ $COUNT -lt 0 ]; then
     while true
     do
-        echo "Running contonuously"
+        echo "Running continuously"
         run_top_once
         run_iostat_once
         run_vmstat_once
