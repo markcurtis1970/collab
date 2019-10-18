@@ -54,7 +54,7 @@ function run_sstablecmds {
      do
          echo -e "\n>>> SSTable: $SSTABLE\n"
          sstablemetadata $SSTABLE
-         sudo -u $CASSUSER sstabledump $SSTABLE -k "$KEY"
+         sudo -u $CASSUSER sstabledump $SSTABLE -k "$KEY" |  sed -e 's/"value" :.*/"value" : <truncated> /g'
      done
 }
 
