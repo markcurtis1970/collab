@@ -7,3 +7,5 @@ ttop output and JVM thread dumps
 `jfr.sh` - runs a JFR for the Cassandra JVM, makes it (hopefully) a little easier than doing it by hand. Also invokes
 it on the fly so no need to bounce the JVM to get those addititonal parameters in there.  Note: this only works with a Oracle JVM
 at present.
+
+`parse.sh` - A simple script to parse covid-19 data from the https://github.com/CSSEGISandData/COVID-19 repo
