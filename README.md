@@ -8,4 +8,3 @@ ttop output and JVM thread dumps
 it on the fly so no need to bounce the JVM to get those addititonal parameters in there.  Note: this only works with a Oracle JVM
 at present.
 
-`parse.sh` - A simple script to parse covid-19 data from the https://github.com/CSSEGISandData/COVID-19 repo
