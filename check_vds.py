@@ -4,8 +4,9 @@
 The following script will get all views and then iterate over them to grab the catalog and path info
 '''
 
-import requests, time
+import requests, time, json
 import sys
+import os
 
 # Check arguments
 def usage():
@@ -16,10 +17,13 @@ def usage():
         print ('\n'+str(sys.argv[0])+' hostname:port')
         sys.exit(0)
 
-# Setup vars / read files etc
+# Setup vars etc
 def setup_env():
-    global ip
+    global ip, opt
     ip = sys.argv[1]
+    opt = "vds_query.json"
+    
+
 
 # Authentication
 def auth():
@@ -84,7 +88,9 @@ def get_catalog():
         #print(catalog_resp.headers)
         # Validate response
         if catalog_resp.status_code == 200:
-            print (catalog_resp.json())
+            json_resp=json.dumps(catalog_resp.json())
+            print (json_resp)
+            f.write(str(json_resp) + "\n")
             catalog_ids.append(catalog_resp.json()['id'])
         else:
             print('Catalog error:', catalog_resp.status_code, catalog_resp.text)
@@ -99,7 +105,9 @@ def get_graph():
         #print(graph_resp.headers)
         # Validate response
         if graph_resp.status_code == 200:
-            print (graph_resp.json())
+            json_resp=json.dumps(graph_resp.json())
+            print (json_resp)
+            f.write(str(json_resp) + "\n")
         else:
             print('Catalog error:', graph_resp.status_code, graph_resp.text)
             sys.exit(1)
@@ -115,12 +123,18 @@ def get_catalog_debug():
 
 
 def main():
+    global f
     usage()
     setup_env()
     auth()
+    f = open(opt, "x")
+    f.close
+    f = open(opt, "a")
     get_views()
     get_catalog()
     get_graph()
+    print("Results in: " + opt)
+    f.close
 
 if __name__ == "__main__":
     main()
