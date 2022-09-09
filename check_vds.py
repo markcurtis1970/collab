@@ -41,7 +41,6 @@ def auth():
         'Content-Type': 'application/json',
     }
 
-
 # Get all VDS
 def get_views():
     global views
@@ -71,7 +70,48 @@ def get_views():
     else:
         print('Results fetch failed')
         sys.exit(1)
-    views=response.json()
+    views=response.json() # dictionary of the results
+
+# Catalog query
+def get_catalog():
+    global catalog_ids
+    catalog_ids=[]
+    for row in views["rows"]:
+        path = '\"' + str(row["TABLE_SCHEMA"]) + '\"/\"' + str(row["TABLE_NAME"]) + '\"'
+        path = str(row["TABLE_SCHEMA"]) + '/' + str(row["TABLE_NAME"]) 
+        catalog_resp = requests.request("GET", BASE_URL + "/api/v3/catalog/by-path/" + path, headers=auth_header)
+        #print(catalog_resp.url)
+        #print(catalog_resp.headers)
+        # Validate response
+        if catalog_resp.status_code == 200:
+            print (catalog_resp.json())
+            catalog_ids.append(catalog_resp.json()['id'])
+        else:
+            print('Catalog error:', catalog_resp.status_code, catalog_resp.text)
+            sys.exit(1)
+
+
+# Graph query
+def get_graph():
+    for catalog_id in catalog_ids:
+        graph_resp = requests.request("GET", BASE_URL + "/api/v3/catalog/" + catalog_id + "/graph", headers=auth_header)
+        #print(graph_resp.url)
+        #print(graph_resp.headers)
+        # Validate response
+        if graph_resp.status_code == 200:
+            print (graph_resp.json())
+        else:
+            print('Catalog error:', graph_resp.status_code, graph_resp.text)
+            sys.exit(1)
+
+# Get VDS Catalog info
+def get_catalog_debug():
+    print(type(views))
+    print(views["rows"])
+    for row in views["rows"]:
+        path = '"' + str(row["TABLE_SCHEMA"]) + '"/"' + str(row["TABLE_NAME"]) + '"'
+        print(path)
+        
 
 
 def main():
@@ -79,6 +119,8 @@ def main():
     setup_env()
     auth()
     get_views()
+    get_catalog()
+    get_graph()
 
 if __name__ == "__main__":
     main()
