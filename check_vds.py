@@ -79,25 +79,29 @@ def page_results():
     # Cycle through all results
     res = 0
     views = {}
+    limit=10
     while res < int(job['rowCount']):
-        response = requests.request("GET", BASE_URL + "/api/v3/job/"+job_id+"/results?offset=" + str(res) + "&limit=500", headers=auth_header)
-        print("GET", BASE_URL + "/api/v3/job/"+job_id+"/results/offset=" + str(res) + "&limit=500")
+        response = requests.request("GET", BASE_URL + "/api/v3/job/"+job_id+"/results?offset=" + str(res) + "&limit=" + str(limit), headers=auth_header)
+        print("GET", BASE_URL + "/api/v3/job/"+job_id+"/results/offset=" + str(res) + "&limit" + str(limit))
         # Validate response
         if response.status_code == 200:
-            print ('Results fetched from '+ str(res) + " to " + str(res + 500))
-            res = res + 500
+            print ('Results fetched from '+ str(res) + " to " + str(res + limit))
+            res = res + limit
+            if len(views)==0:
+               views.update(response.json())
+            else:
+               for row in response.json()['rows']:
+                   views['rows'].append(row)
         else:
-            print('Results fetch failed for '+ str(res) + " to " + str(res + 500))
+            print('Results fetch failed for '+ str(res) + " to " + str(res + limit))
             sys.exit(1)
-        # Append results page to overall results
-        views.update(response.json())
 
 
 # Catalog query
 def get_catalog():
     global catalog_ids
     catalog_ids=[]
-    for row in views["rows"]:
+    for row in views['rows']:
         schema = str(row["TABLE_SCHEMA"]).replace(".", "/")
         table = str(row["TABLE_NAME"])
         path = schema + '/' + table
