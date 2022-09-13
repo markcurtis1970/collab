@@ -32,7 +32,7 @@ def auth():
     headers = {
         'Content-Type': 'application/json',
     }
-    data = '{"userName": "mc", "password": "dremio123"}'
+    data = '{"userName": "dremio", "password": "dremio123"}'
     response = requests.post(BASE_URL + '/apiv2/login', headers=headers, data=data, verify=False)
     if response.status_code == 200:
         print ('Successfully authenticated.')
@@ -47,7 +47,7 @@ def auth():
 
 # Get all VDS
 def get_views():
-    global views
+    global job, job_id
     data = '{"sql": "SELECT * FROM INFORMATION_SCHEMA.views"}'
     response = requests.post(BASE_URL + '/api/v3/sql', headers=auth_header, data=data)
     
@@ -66,51 +66,65 @@ def get_views():
         time.sleep(1)
         job_status = requests.request("GET", BASE_URL + "/api/v3/job/" +job_id, headers=auth_header).json()['jobState']
     
-    # Get the results from the job
-    response = requests.request("GET", BASE_URL + "/api/v3/job/"+job_id+"/results", headers=auth_header)
-    # Validate response
-    if response.status_code == 200:
-        print ('Results fetched ok')
+    # Once job is successful then continue or error
+    if job_status == 'COMPLETED':
+        job = requests.request("GET", BASE_URL + "/api/v3/job/" +job_id, headers=auth_header).json()
     else:
-        print('Results fetch failed')
+        print('Job ' + job_id + ' exited with status ' + job['jobState'])
         sys.exit(1)
-    views=response.json() # dictionary of the results
+
+# Page thru results
+def page_results():
+    global views
+    # Cycle through all results
+    res = 0
+    views = {}
+    while res < int(job['rowCount']):
+        response = requests.request("GET", BASE_URL + "/api/v3/job/"+job_id+"/results?offset=" + str(res) + "&limit=500", headers=auth_header)
+        print("GET", BASE_URL + "/api/v3/job/"+job_id+"/results/offset=" + str(res) + "&limit=500")
+        # Validate response
+        if response.status_code == 200:
+            print ('Results fetched from '+ str(res) + " to " + str(res + 500))
+            res = res + 500
+        else:
+            print('Results fetch failed for '+ str(res) + " to " + str(res + 500))
+            sys.exit(1)
+        # Append results page to overall results
+        views.update(response.json())
+
 
 # Catalog query
 def get_catalog():
     global catalog_ids
     catalog_ids=[]
     for row in views["rows"]:
-        path = '\"' + str(row["TABLE_SCHEMA"]) + '\"/\"' + str(row["TABLE_NAME"]) + '\"'
-        path = str(row["TABLE_SCHEMA"]) + '/' + str(row["TABLE_NAME"]) 
+        schema = str(row["TABLE_SCHEMA"]).replace(".", "/")
+        table = str(row["TABLE_NAME"])
+        path = schema + '/' + table
+        print('Fetching catalog for dataset: ' + path)
         catalog_resp = requests.request("GET", BASE_URL + "/api/v3/catalog/by-path/" + path, headers=auth_header)
-        #print(catalog_resp.url)
-        #print(catalog_resp.headers)
         # Validate response
         if catalog_resp.status_code == 200:
             json_resp=json.dumps(catalog_resp.json())
-            print (json_resp)
             f.write(str(json_resp) + "\n")
             catalog_ids.append(catalog_resp.json()['id'])
         else:
             print('Catalog error:', catalog_resp.status_code, catalog_resp.text)
-            sys.exit(1)
+        #    sys.exit(1) # choose wether or not to abort on error
 
 
 # Graph query
 def get_graph():
     for catalog_id in catalog_ids:
+        print('Fetching graph for dataset id: ' + catalog_id)
         graph_resp = requests.request("GET", BASE_URL + "/api/v3/catalog/" + catalog_id + "/graph", headers=auth_header)
-        #print(graph_resp.url)
-        #print(graph_resp.headers)
         # Validate response
         if graph_resp.status_code == 200:
             json_resp=json.dumps(graph_resp.json())
-            print (json_resp)
             f.write(str(json_resp) + "\n")
         else:
             print('Catalog error:', graph_resp.status_code, graph_resp.text)
-            sys.exit(1)
+        #    sys.exit(1) # choose wether or not to abort on error
 
 # Get VDS Catalog info
 def get_catalog_debug():
@@ -131,6 +145,7 @@ def main():
     f.close
     f = open(opt, "a")
     get_views()
+    page_results()
     get_catalog()
     get_graph()
     print("Results in: " + opt)
